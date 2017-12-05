@@ -72,7 +72,6 @@ func dbTest (w http.ResponseWriter, r *http.Request) {
 	// db connection
 	db, err := sql.Open("mysql", "root:root@tcp(127.0.0.1:8889)/linkedin?charset=utf8")
 	checkErr(err)
-	defer db.Close()
 
 	// a test query
 	getUserSQL := "SELECT * FROM  User"
