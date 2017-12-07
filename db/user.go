@@ -48,3 +48,29 @@ func ValidUser(username, password string) bool {
 	log.Print("Password mismatch")
 	return false
 }
+
+func ValidEmail(email string) bool {
+	user := types.User{}
+	err := db.QueryTable("User").Filter("email", email).One(&user)
+
+	if err == orm.ErrNoRows {
+		return true
+	}
+	return false
+}
+
+func ValidUsername(username string) bool {
+	user := types.User{}
+	err := db.QueryTable("User").Filter("username", username).One(&user)
+
+	if err == orm.ErrNoRows {
+		return true
+	}
+	return false
+}
+
+func CreateAccount(username, email, password string) error {
+	user := types.User{Username:username, Email:email, Password:password}
+	_, err := db.Insert(&user)
+	return err
+}
