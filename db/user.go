@@ -28,18 +28,7 @@ func checkErr(err error) {
 // ValidUser will check if the user exists in db; If exists,
 // then check if the username password combination is valid
 func ValidUser(username, password string) bool {
-	user := types.User{}
-	cond := orm.NewCondition()
-	cond1 := cond.And("username", username).Or("email", username)
-	err := db.QueryTable("User").SetCond(cond1).One(&user)
-
-	if err == orm.ErrNoRows {
-		log.Print("No result found.")
-		return false
-	} else if err == orm.ErrMultiRows {
-		log.Print("Returned Multi Rows Not One")
-		return false
-	}
+	user := GetUser(username)
 	//If the password matches, return true
 	if strings.Compare(password, user.Password) == 0 {
 		return true
@@ -49,6 +38,7 @@ func ValidUser(username, password string) bool {
 	return false
 }
 
+// return true when there is not record in the database, so the account could be registered
 func ValidEmail(email string) bool {
 	user := types.User{}
 	err := db.QueryTable("User").Filter("email", email).One(&user)
@@ -59,6 +49,7 @@ func ValidEmail(email string) bool {
 	return false
 }
 
+// return true when there is not record in the database, so the account could be registered
 func ValidUsername(username string) bool {
 	user := types.User{}
 	err := db.QueryTable("User").Filter("username", username).One(&user)
@@ -73,4 +64,18 @@ func CreateAccount(username, email, password string) error {
 	user := types.User{Username:username, Email:email, Password:password}
 	_, err := db.Insert(&user)
 	return err
+}
+
+func GetUser(username string) types.User {
+	user := types.User{}
+	cond := orm.NewCondition()
+	cond1 := cond.And("username", username).Or("email", username)
+
+	err := db.QueryTable("User").SetCond(cond1).One(&user)
+	if err == orm.ErrNoRows {
+		log.Print("No result found.")
+	} else if err == orm.ErrMultiRows {
+		log.Print("Returned Multi Rows Not One")
+	}
+	return user
 }

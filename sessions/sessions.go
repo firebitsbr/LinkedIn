@@ -15,7 +15,6 @@ import (
 var Store = sessions.NewCookieStore([]byte("secret-password"))
 
 func init() {
-	Store = sessions.NewCookieStore([]byte("something-very-secret"))
 	Store.Options = &sessions.Options{
 		Domain:   "localhost",
 		Path:     "/",
