@@ -4,18 +4,51 @@ import (
 	"net/http"
 	"github.com/izayacity/LinkedIn/db"
 	"github.com/izayacity/LinkedIn/types"
+	"github.com/izayacity/LinkedIn/sessions"
 	"encoding/json"
 )
 
+//RequiresLogin is a middleware which will be used for each httpHandler to check
+// if there is any active session
+func RequiresLogin(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if !sessions.IsLoggedIn(r) {
+			http.Redirect(w, r, "/v1/login/", 302)
+			return
+		}
+		handler(w, r)
+	}
+}
+
+//LogoutFunc Implements the logout functionality. WIll delete the session information from the cookie store
+func LogoutFunc(w http.ResponseWriter, r *http.Request) {
+	session, err := sessions.Store.Get(r, "LoginSession")
+	if err == nil {
+		if session.Values["authenticated"] != "false" {
+			session.Values["authenticated"] = "false"
+			session.Save(r, w)
+		}
+	}
+	http.Redirect(w, r, "/v1/login/", 302) //redirect to login irrespective of error or not
+}
+
+//LoginFunc implements the login functionality,
+// will add a cookie to the cookie store for managing authentication
 func Login(w http.ResponseWriter, r *http.Request) {
+	session, err := sessions.Store.Get(r, "LoginSession")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	switch r.Method {
 	case "POST":
 		log.Print("POST request in /v1/login/")
 		u := types.User{}
-		err := json.NewDecoder(r.Body).Decode(&u)
 
+		err = json.NewDecoder(r.Body).Decode(&u)
 		if err != nil {
-			log.Print("Bad Request")
+			log.Print("Bad Request JSON")
 			w.WriteHeader(400)
 			return
 		}
@@ -23,15 +56,22 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		password := u.Password
 
 		if (username != "" && password != "") && db.ValidUser(username, password) {
+			session.Values["authenticated"] = "true"
+			session.Values["username"] = username
+			err = session.Save(r, w)
+			if err != nil {
+				log.Print("Fail to save the session", err)
+			}
+
 			log.Print("user ", username, " is authenticated")
-			w.WriteHeader(200)
+			http.Redirect(w, r, "/", 302)
 			return
 		}
 		log.Print("Invalid user " + username)
-		w.WriteHeader(404)
+		http.Redirect(w, r, "/v1/login/", 401)
 	default:
-		log.Print("Bad Request")
-		w.WriteHeader(400)
+		log.Print("Bad Request Method")
+		http.Redirect(w, r, "/v1/login/", 400)
 	}
 }
 
@@ -62,9 +102,9 @@ func Register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		log.Print("Invalid username " + username + " or email " + email)
-		w.WriteHeader(404)
+		http.Redirect(w, r, "/v1/register/", http.StatusUnauthorized)
 	default:
 		log.Print("Bad Request")
-		w.WriteHeader(400)
+		http.Redirect(w, r, "/v1/register/", http.StatusUnauthorized)
 	}
 }

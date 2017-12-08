@@ -16,6 +16,7 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/v1/login/", views.Login)
 	r.HandleFunc("/v1/register/", views.Register)
+	r.HandleFunc("/", views.RequiresLogin(views.ShowUserProfile))
 
 	// dealing with CORS issue with gorilla handlers
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})

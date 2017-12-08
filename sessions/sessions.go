@@ -13,13 +13,21 @@ import (
 
 // Store the cookie store which is going to store session data in the cookie
 var Store = sessions.NewCookieStore([]byte("secret-password"))
-var session *sessions.Session
+
+func init() {
+	Store = sessions.NewCookieStore([]byte("something-very-secret"))
+	Store.Options = &sessions.Options{
+		Domain:   "localhost",
+		Path:     "/",
+		MaxAge:   3600 * 8, // 8 hours
+		HttpOnly: true,
+	}
+}
 
 // Check if the user has an active session and return True
 func IsLoggedIn(r *http.Request) bool {
-	session, err := Store.Get(r, "session")
-
-	if err == nil && (session.Values["loggedin"] == "true") {
+	session, err := Store.Get(r, "LoginSession")
+	if err == nil && (session.Values["authenticated"] == "true") {
 		return true
 	}
 	return false
@@ -27,7 +35,7 @@ func IsLoggedIn(r *http.Request) bool {
 
 // Returns the username of the logged in user
 func GetCurrentUserName(r *http.Request) string {
-	session, err := Store.Get(r, "session")
+	session, err := Store.Get(r, "LoginSession")
 	if err == nil {
 		return session.Values["username"].(string)
 	}
