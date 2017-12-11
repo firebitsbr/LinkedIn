@@ -14,9 +14,10 @@ func main() {
 	PORT := ":5000"
 	log.Print("Running server on "+ PORT)
 	r := mux.NewRouter()
-	r.HandleFunc("/v1/login/", views.Login)
-	r.HandleFunc("/v1/register/", views.Register)
-	r.HandleFunc("/", views.RequiresLogin(views.ShowUserProfile))
+	r.HandleFunc("/v1/login", views.Login)
+	r.HandleFunc("/v1/register", views.Register)
+	r.HandleFunc("/v1/me", views.RequiresLogin(views.ShowUserProfile))
+	r.HandleFunc("/v1/users/{uid}", views.ShowUserProfileById)
 
 	// dealing with CORS issue with gorilla handlers
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
