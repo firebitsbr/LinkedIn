@@ -13,16 +13,22 @@ func main() {
 	// bind the port of the http server
 	PORT := ":5000"
 	log.Print("Running server on "+ PORT)
-	r := mux.NewRouter()
-	r.HandleFunc("/v1/login", views.Login)
-	r.HandleFunc("/v1/register", views.Register)
-	r.HandleFunc("/v1/me", views.RequiresLogin(views.ShowUserProfile))
-	r.HandleFunc("/v1/users/{uid}", views.ShowUserProfileById)
 
-	// dealing with CORS issue with gorilla handlers
+	// Use Gorilla mux router to handle parameterized routing with methods
+	r := mux.NewRouter()
+	r.HandleFunc("/v1/login", views.Login).Methods("POST")
+	r.HandleFunc("/v1/register", views.Register).Methods("POST")
+	r.HandleFunc("/v1/logout", views.Logout).Methods("GET")
+	r.HandleFunc("/v1/me", views.RequiresLogin(views.ShowMyProfile)).Methods("GET")
+	r.HandleFunc("/v1/users/{uid}", views.ShowUserProfile).Methods("GET")
+	r.HandleFunc("/v1/me/skills", views.RequiresLogin(views.AddSkill)).Methods("POST")
+	r.HandleFunc("/v1/me/skills/{sid}", views.RequiresLogin(views.RemoveSkill)).Methods("DELETE")
+
+	// deal with CORS issue by using Gorilla handlers
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
 	originsOk := handlers.AllowedOrigins([]string{"*"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE","OPTIONS"})
 
+	// http listen and serve on the address and port
 	log.Fatal(http.ListenAndServe(PORT, handlers.CORS(originsOk, headersOk, methodsOk)(r)))
 }

@@ -41,7 +41,7 @@ func ValidUser(username, password string) bool {
 // return true when there is not record in the database, so the account could be registered
 func ValidEmail(email string) bool {
 	user := types.User{}
-	err := db.QueryTable("User").Filter("email", email).One(&user)
+	err := db.QueryTable("user").Filter("email", email).One(&user)
 
 	if err == orm.ErrNoRows {
 		return true
@@ -52,7 +52,7 @@ func ValidEmail(email string) bool {
 // return true when there is not record in the database, so the account could be registered
 func ValidUsername(username string) bool {
 	user := types.User{}
-	err := db.QueryTable("User").Filter("username", username).One(&user)
+	err := db.QueryTable("user").Filter("username", username).One(&user)
 
 	if err == orm.ErrNoRows {
 		return true
@@ -71,7 +71,7 @@ func GetUser(username string) types.User {
 	cond := orm.NewCondition()
 	cond1 := cond.And("username", username).Or("email", username)
 
-	err := db.QueryTable("User").SetCond(cond1).One(&user)
+	err := db.QueryTable("user").SetCond(cond1).One(&user)
 	if err == orm.ErrNoRows {
 		log.Print("No result found.")
 	} else if err == orm.ErrMultiRows {

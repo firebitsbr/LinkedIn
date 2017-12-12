@@ -33,10 +33,10 @@ func IsLoggedIn(r *http.Request) bool {
 }
 
 // Returns the username of the logged in user
-func GetCurrentUserName(r *http.Request) string {
+func GetCurrentUser(r *http.Request) (int, string) {
 	session, err := Store.Get(r, "LoginSession")
 	if err == nil {
-		return session.Values["username"].(string)
+		return session.Values["userid"].(int), session.Values["username"].(string)
 	}
-	return ""
+	return -1, ""
 }
