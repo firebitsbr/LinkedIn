@@ -18,11 +18,12 @@ func main() {
 	r := mux.NewRouter()
 	r.HandleFunc("/v1/login", views.Login).Methods("POST")
 	r.HandleFunc("/v1/register", views.Register).Methods("POST")
-	r.HandleFunc("/v1/logout", views.Logout).Methods("GET")
+	r.HandleFunc("/v1/logout", views.RequiresLogin(views.Logout)).Methods("GET")
 	r.HandleFunc("/v1/me", views.RequiresLogin(views.ShowMyProfile)).Methods("GET")
 	r.HandleFunc("/v1/users/{uid}", views.ShowUserProfile).Methods("GET")
 	r.HandleFunc("/v1/me/skills", views.RequiresLogin(views.AddSkill)).Methods("POST")
 	r.HandleFunc("/v1/me/skills/{sid}", views.RequiresLogin(views.RemoveSkill)).Methods("DELETE")
+	r.HandleFunc("/v1/users/{uid}/skills/{sid}/endorse", views.RequiresLogin(views.Endorse)).Methods("PUT")
 
 	// deal with CORS issue by using Gorilla handlers
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})

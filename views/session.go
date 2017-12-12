@@ -10,6 +10,14 @@ import (
 	"strconv"
 )
 
+func checkErr(err error, w http.ResponseWriter) {
+	if err != nil {
+		log.Print("Internal Server ERROR: ", err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		panic(err)
+	}
+}
+
 // Used for each httpHandler to check if there is any active session
 func RequiresLogin(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +38,8 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 			session.Save(r, w)
 		}
 	}
-	w.WriteHeader(401)
+	log.Print("User Logged out")
+	w.WriteHeader(200)
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
@@ -67,10 +76,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 
 		// Save the session. NOTE: has to be before any writing to the response
 		err = session.Save(r, w)
-		if err != nil {
-			log.Print("Fail to save the session", err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
+		checkErr(err, w)
 
 		// Set Cookie on client for 3 months
 		expiration := time.Now().Add(90 * 24 * time.Hour)
@@ -103,10 +109,8 @@ func Register(w http.ResponseWriter, r *http.Request) {
 	// Check if the username or email already exists in the database
 	if (username != "" && email != "" && password != "") && db.ValidUsername(username) && db.ValidEmail(email) {
 		err = db.CreateAccount(username, email, password)
-		if err != nil {
-			log.Print("Fail to create the user account")
-			return
-		}
+		checkErr(err, w)
+
 		log.Print("user ", username, "'s account is created")
 		w.WriteHeader(201)
 		return

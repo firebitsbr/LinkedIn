@@ -9,13 +9,6 @@ import (
 	"strconv"
 )
 
-func checkErr(err error) {
-	if err != nil {
-		log.Print("Internal Server ERROR: ", err)
-		panic(err)
-	}
-}
-
 // TODO skills
 func ShowMyProfile(w http.ResponseWriter, r *http.Request) {
 	userId, username := sessions.GetCurrentUser(r)
@@ -42,22 +35,26 @@ func ShowUserProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
+// return the skill object
 func AddSkill(w http.ResponseWriter, r *http.Request) {
 	userId, _ := sessions.GetCurrentUser(r)
 	if userId == -1 {
 		log.Print("Empty userId in AddSkill")
+		w.WriteHeader(401)
 		return
 	}
 	skillName := "Golang"
 	err := db.AddSkill(userId, skillName)
-	checkErr(err)
+	checkErr(err, w)
 	log.Print("Added skill(name) ", skillName, " to user ", userId)
+	w.WriteHeader(201)
 }
 
 func RemoveSkill(w http.ResponseWriter, r *http.Request) {
 	userId, _ := sessions.GetCurrentUser(r)
 	if userId == -1 {
 		log.Print("Empty userId in RemoveSkill")
+		w.WriteHeader(401)
 		return
 	}
 	vars := mux.Vars(r)
@@ -65,9 +62,11 @@ func RemoveSkill(w http.ResponseWriter, r *http.Request) {
 
 	if skillErr != nil || &skillId == nil {
 		log.Print("Empty sid in RemoveSkill")
+		w.WriteHeader(400)
 		return
 	}
 	err := db.RemoveSkill(userId, skillId)
-	checkErr(err)
+	checkErr(err, w)
 	log.Print("Removed skill(id) ", skillId, " from user ", userId)
+	w.WriteHeader(204)
 }

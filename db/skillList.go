@@ -11,7 +11,6 @@ func init() {
 	orm.RegisterModel(new(types.SkillList))
 }
 
-
 func AddSkill(userId int, skillName string) error {
 	skill := types.SkillList{Name: skillName, Owner: userId}
 	_, err := db.Insert(&skill)

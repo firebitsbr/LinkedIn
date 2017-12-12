@@ -12,7 +12,7 @@ type Users []User
 
 type Endorse struct {
 	Id           					int           	`json:"id"`
-	Name						string		`json:"name"`
+	Sid							int			`json:"sid"`
 	Owner						int			`json:"owner"`
 	Sender						int			`json:"sender"`
 	LastModified			string		`json:"last_modified"`
@@ -21,10 +21,11 @@ type Endorse struct {
 type Endorses []Endorse
 
 type SkillList struct {
-	Id           	int           	`json:"id"`
-	Name		string		`json:"name"`
-	Count		int			`json:"count"`
-	Owner		int			`json:"owner"`
+	Id           				int           	`json:"id"`
+	Name					string		`json:"name"`
+	Count					int			`json:"count"`
+	Owner					int			`json:"owner"`
+	CreatedTime		string		`json:"created_time"`
 }
 
 type Skills []SkillList
@@ -33,5 +34,5 @@ type SkillTag struct {
 	Id           	int           	`json:"id"`
 	Name		string		`json:"name"`
 	Total			int			`json:"total"`
-	No15		int			`json:"no15"`
+	Expert		int			`json:"expert"`
 }
