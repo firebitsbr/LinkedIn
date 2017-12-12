@@ -11,12 +11,14 @@ func init() {
 	orm.RegisterModel(new(types.SkillList))
 }
 
+// write a new skill_list object into the database
 func AddSkill(userId int, skillName string) error {
 	skill := types.SkillList{Name: skillName, Owner: userId}
 	_, err := db.Insert(&skill)
 	return err
 }
 
+// delete the skill_list object from the database
 func RemoveSkill(userId, skillId int) error {
 	skill := types.SkillList{Id: skillId, Owner: userId}
 	var err error

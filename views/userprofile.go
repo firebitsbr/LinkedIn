@@ -9,7 +9,7 @@ import (
 	"strconv"
 )
 
-// TODO skills
+// TODO skills json response
 func ShowMyProfile(w http.ResponseWriter, r *http.Request) {
 	userId, username := sessions.GetCurrentUser(r)
 	if userId == -1 {
@@ -21,7 +21,7 @@ func ShowMyProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-// TODO skills
+// TODO skills json response
 func ShowUserProfile(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	uid := vars["uid"]
@@ -35,7 +35,7 @@ func ShowUserProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-// return the skill object
+// TODO skill object response
 func AddSkill(w http.ResponseWriter, r *http.Request) {
 	userId, _ := sessions.GetCurrentUser(r)
 	if userId == -1 {
