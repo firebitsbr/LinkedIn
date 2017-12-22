@@ -2,11 +2,11 @@ package views
 
 import (
 	"net/http"
-	"github.com/izayacity/LinkedIn/sessions"
 	"log"
+	"strconv"
+	"github.com/izayacity/LinkedIn/sessions"
 	"github.com/gorilla/mux"
 	"github.com/izayacity/LinkedIn/db"
-	"strconv"
 )
 
 // TODO skills json response
@@ -17,6 +17,8 @@ func ShowMyProfile(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(401)
 		return
 	}
+	uid := strconv.Itoa(userId)
+	db.GetSkills(uid)
 	log.Print("ShowMyProfile: user ID: ", userId, ", Username: ", username)
 	w.WriteHeader(200)
 }
@@ -31,6 +33,7 @@ func ShowUserProfile(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
+	db.GetSkills(uid)
 	log.Print("ShowUserProfile: user ID is ", uid)
 	w.WriteHeader(200)
 }

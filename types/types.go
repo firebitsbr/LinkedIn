@@ -28,7 +28,7 @@ type SkillList struct {
 	CreatedTime		string		`json:"created_time"`
 }
 
-type Skills []SkillList
+type SkillLists []SkillList
 
 type SkillTag struct {
 	Id           	int           	`json:"id"`
@@ -36,3 +36,12 @@ type SkillTag struct {
 	Total			int			`json:"total"`
 	Expert		int			`json:"expert"`
 }
+
+type Skill struct {
+	Id           		int
+	Name			string
+	Count			int
+	Sender			int
+}
+
+type Skills []Skill
