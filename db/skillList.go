@@ -31,19 +31,38 @@ func RemoveSkill(userId, skillId int) error {
 
 // return user name, skill name, count, and endorsers
 func GetSkills(userId string) types.Skills {
+	// for app and result
 	skills := types.Skills{}
-	qb, _ := orm.NewQueryBuilder("mysql")
+	// for db model query
+	skillRows := types.SkillRows{}
 
+	// fetch rows from db into skillRows
+	qb, _ := orm.NewQueryBuilder("mysql")
 	sql := qb.Select("skill_list.id", "skill_list.name", "skill_list.count", "endorse.sender").
 		From("skill_list").InnerJoin("endorse").
-			On("skill_list.owner="+userId+" AND endorse.owner=" + userId).
+			On("skill_list.owner="+userId).And("endorse.owner=" + userId).
 				GroupBy("skill_list.id", "endorse.sender").String()
-	_, err := db.Raw(sql).QueryRows(&skills)
+	_, err := db.Raw(sql).QueryRows(&skillRows)
 	checkErr(err)
 
-	for _, skill := range skills {
-		log.Print(skill)
+	// convert SkillRow data type to Skill data type that store senders as array
+	if len(skillRows) < 1 {
+		log.Print("No result of skill rows")
+		return skills
 	}
+	skillRow := skillRows[0]
+	prevId := skillRow.Id
+	skill := types.Skill{ Id: skillRow.Id, Name: skillRow.Name, Count: skillRow.Count, Sender: []int{} }
+
+	for _, skillRow = range skillRows {
+		if skillRow.Id != prevId {
+			skills = append(skills, skill)
+			skill = types.Skill{ Id: skillRow.Id, Name: skillRow.Name, Count: skillRow.Count, Sender: []int{} }
+			prevId = skillRow.Id
+		}
+		skill.Sender = append(skill.Sender, skillRow.Sender)
+	}
+	skills = append(skills, skill)
 	return skills
 }
 //SELECT skill_list.id, skill_list.name, skill_list.count, endorse.sender

@@ -7,7 +7,21 @@ import (
 	"github.com/izayacity/LinkedIn/sessions"
 	"github.com/gorilla/mux"
 	"github.com/izayacity/LinkedIn/db"
+	"github.com/izayacity/LinkedIn/types"
 )
+
+func printProfile(skills types.Skills) {
+	log.Print("Skills size: ", len(skills))
+	for _, skill := range skills {
+		log.Print("Skill ID: ", skill.Id)
+		log.Print("Skill name: ", skill.Name)
+		log.Print("Skill count: ", skill.Count)
+		log.Print("Skill senders: ")
+		for _, sender := range skill.Sender {
+			log.Print(sender)
+		}
+	}
+}
 
 // TODO skills json response
 func ShowMyProfile(w http.ResponseWriter, r *http.Request) {
@@ -18,7 +32,9 @@ func ShowMyProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	uid := strconv.Itoa(userId)
-	db.GetSkills(uid)
+	skills := db.GetSkills(uid)
+	printProfile(skills)
+
 	log.Print("ShowMyProfile: user ID: ", userId, ", Username: ", username)
 	w.WriteHeader(200)
 }
@@ -33,7 +49,8 @@ func ShowUserProfile(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(400)
 		return
 	}
-	db.GetSkills(uid)
+	skills := db.GetSkills(uid)
+	printProfile(skills)
 	log.Print("ShowUserProfile: user ID is ", uid)
 	w.WriteHeader(200)
 }

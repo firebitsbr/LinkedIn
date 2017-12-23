@@ -37,11 +37,20 @@ type SkillTag struct {
 	Expert		int			`json:"expert"`
 }
 
-type Skill struct {
+type SkillRow struct {
 	Id           		int
 	Name			string
 	Count			int
 	Sender			int
+}
+
+type SkillRows []SkillRow
+
+type Skill struct {
+	Id           		int
+	Name			string
+	Count			int
+	Sender			[]int
 }
 
 type Skills []Skill
