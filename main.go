@@ -27,9 +27,10 @@ func main() {
 
 	// deal with CORS issue by using Gorilla handlers
 	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
-	originsOk := handlers.AllowedOrigins([]string{"*"})
+	originsOk := handlers.AllowedOrigins([]string{"http://localhost:3000", "http://localhost:5000", "http://evil.com/"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE","OPTIONS"})
+	credentialsOk := handlers.AllowCredentials()
 
 	// http listen and serve on the address and port
-	log.Fatal(http.ListenAndServe(PORT, handlers.CORS(originsOk, headersOk, methodsOk)(r)))
+	log.Fatal(http.ListenAndServe(PORT, handlers.CORS(originsOk, headersOk, methodsOk, credentialsOk)(r)))
 }

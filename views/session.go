@@ -22,6 +22,7 @@ func checkErr(err error, w http.ResponseWriter) {
 func RequiresLogin(handler func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if !sessions.IsLoggedIn(r) {
+			log.Print("Not logged in")
 			w.WriteHeader(401)
 			return
 		}
@@ -68,7 +69,11 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		log.Print("user ", username, " is authenticated")
 
 		// Get the user information and correct the username if it's an email
-		u = db.GetUser(username)
+		u, err = db.GetUser(username)
+		if err != nil {
+			w.WriteHeader(401)		// not sure
+			return
+		}
 		session.Values["authenticated"] = "true"
 		session.Values["username"] = u.Username
 		session.Values["email"] = u.Email

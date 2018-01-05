@@ -3,8 +3,9 @@ package db
 import (
 	"github.com/izayacity/LinkedIn/types"
 	"github.com/astaxie/beego/orm"
+	"golang.org/x/crypto/bcrypt"
 	"log"
-	"strings"
+	"errors"
 )
 
 var db orm.Ormer
@@ -28,18 +29,29 @@ func checkErr(err error) {
 // ValidUser will check if the user exists in db; If exists,
 // then check if the username password combination is valid
 func ValidUser(username, password string) bool {
-	user := GetUser(username)
-	//If the password matches, return true
-	if strings.Compare(password, user.Password) == 0 {
-		return true
+	if username == "" || password == "" {
+		log.Print("Empty field")
+		return false
 	}
-	//by default return false
-	log.Print("Password mismatch")
-	return false
+	user, err := GetUser(username)
+	if err != nil {
+		return false
+	}
+	//If the password matches, return true
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		log.Print("ERROR: ", err)
+		return false
+	}
+	return true
 }
 
 // return true when there is not record in the database, so the account could be registered
 func ValidEmail(email string) bool {
+	if email == "" {
+		log.Print("Empty email")
+		return false
+	}
 	user := types.User{}
 	err := db.QueryTable("user").Filter("email", email).One(&user)
 
@@ -51,6 +63,10 @@ func ValidEmail(email string) bool {
 
 // return true when there is not record in the database, so the account could be registered
 func ValidUsername(username string) bool {
+	if username == "" {
+		log.Print("Empty username")
+		return false
+	}
 	user := types.User{}
 	err := db.QueryTable("user").Filter("username", username).One(&user)
 
@@ -61,13 +77,24 @@ func ValidUsername(username string) bool {
 }
 
 func CreateAccount(username, email, password string) error {
-	user := types.User{Username:username, Email:email, Password:password}
-	_, err := db.Insert(&user)
+	if username == "" || email == "" || password == "" {
+		return errors.New("empty field")
+	}
+	hashBytes, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.MinCost)
+	if err != nil {
+		log.Println(err)
+	}
+	hash := string(hashBytes)
+	user := types.User{Username:username, Email:email, Password:hash}
+	_, err = db.Insert(&user)
 	return err
 }
 
-func GetUser(username string) types.User {
+func GetUser(username string) (types.User, error) {
 	user := types.User{}
+	if username == "" {
+		return user, errors.New("empty username")
+	}
 	cond := orm.NewCondition()
 	cond1 := cond.And("username", username).Or("email", username)
 
@@ -77,5 +104,5 @@ func GetUser(username string) types.User {
 	} else if err == orm.ErrMultiRows {
 		log.Print("Returned Multi Rows Not One")
 	}
-	return user
+	return user, err
 }
