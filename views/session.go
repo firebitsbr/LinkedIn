@@ -5,10 +5,29 @@ import (
 	"github.com/izayacity/LinkedIn/db"
 	"github.com/izayacity/LinkedIn/types"
 	"github.com/izayacity/LinkedIn/sessions"
+	"github.com/dgrijalva/jwt-go"
 	"encoding/json"
 	"time"
 	"strconv"
+	"io/ioutil"
 )
+
+const (
+	privKeyPath = "config/app.rsa"
+	pubKeyPath = "config/app.rsa.pub"
+)
+
+var SignKey []byte
+
+func initKeys(){
+	var err error
+
+	SignKey, err = ioutil.ReadFile(privKeyPath)
+	if err != nil {
+		log.Fatal("Error reading private key")
+		return
+	}
+}
 
 func checkErr(err error, w http.ResponseWriter) {
 	if err != nil {
@@ -44,13 +63,13 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
+	// initialize session and user model
 	session, err := sessions.Store.Get(r, "LoginSession")
 	if err != nil {
 		log.Print("Fail to retrieve the session in login")
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
 	log.Print("POST  /v1/login/")
 	u := types.User{}
 
@@ -65,36 +84,65 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	password := u.Password
 
 	// Verify with the information in the database
-	if (username != "" && password != "") && db.ValidUser(username, password) {
-		log.Print("user ", username, " is authenticated")
-
-		// Get the user information and correct the username if it's an email
-		u, err = db.GetUser(username)
-		if err != nil {
-			w.WriteHeader(401)		// not sure
-			return
-		}
-		session.Values["authenticated"] = "true"
-		session.Values["username"] = u.Username
-		session.Values["email"] = u.Email
-		session.Values["userid"] = u.Id
-
-		// Save the session. NOTE: has to be before any writing to the response
-		err = session.Save(r, w)
-		checkErr(err, w)
-
-		// Set Cookie on client for 3 months
-		expiration := time.Now().Add(90 * 24 * time.Hour)
-		cookieUsername := http.Cookie{Name: "username", Value: u.Username, Expires: expiration}
-		cookieId := http.Cookie{Name: "userid", Value: strconv.Itoa(u.Id), Expires: expiration}
-		http.SetCookie(w, &cookieUsername)
-		http.SetCookie(w, &cookieId)
-
-		w.WriteHeader(200)
+	if username == "" || password == "" || !db.ValidUser(username, password) {
+		log.Print("Invalid user " + username)
+		w.WriteHeader(401)
 		return
 	}
-	log.Print("Invalid user " + username)
-	w.WriteHeader(401)
+	log.Print("user ", username, " is authenticated")
+
+	// Get the user information and correct the username if it's an email
+	u, err = db.GetUser(username)
+	if err != nil {
+		w.WriteHeader(401)		// not sure
+		return
+	}
+	session.Values["authenticated"] = "true"
+	session.Values["username"] = u.Username
+	session.Values["email"] = u.Email
+	session.Values["userid"] = u.Id
+
+	// Save the session. NOTE: has to be before any writing to the response
+	err = session.Save(r, w)
+	checkErr(err, w)
+
+	// Set Cookie on client for 3 months
+	expiration := time.Now().Add(90 * 24 * time.Hour)
+	cookieUsername := http.Cookie{Name: "username", Value: u.Username, Expires: expiration}
+	cookieId := http.Cookie{Name: "userid", Value: strconv.Itoa(u.Id), Expires: expiration}
+	http.SetCookie(w, &cookieUsername)
+	http.SetCookie(w, &cookieId)
+
+	initKeys()
+	// Create a new token object, specifying signing method and the claims
+	// you would like it to contain.
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"username": username,
+		"createdTime": time.Now().Unix(),
+	})
+	// Sign and get the complete encoded token as a string using the secret
+	tokenString, err := token.SignedString(SignKey)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		log.Printf("Error signing token: %v\n", err)
+		return
+	}
+	log.Print("Token created: ", tokenString)
+
+	//create a token instance using the token string
+	response := types.Token{Token: tokenString}
+	JsonResponse(response, w)
+}
+
+func JsonResponse(response interface{}, w http.ResponseWriter) {
+	json, err :=  json.Marshal(response)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Header().Set("Content-Type", "application/json")
+	w.Write(json)
 }
 
 func Register(w http.ResponseWriter, r *http.Request) {

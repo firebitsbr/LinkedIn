@@ -54,3 +54,7 @@ type Skill struct {
 }
 
 type Skills []Skill
+
+type Token struct {
+	Token 	string    `json:"token"`
+}
