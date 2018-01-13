@@ -71,6 +71,11 @@ func isValidToken(r *http.Request) bool {
 	tokenString := r.Header.Get("Authorization")
 	fmt.Println("tokenString: ", tokenString)
 
+	if tokenString == "" {
+		log.Println("Empty token")
+		return false
+	}
+
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -162,7 +167,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	// Create a new token object, specifying signing method and the claims
 	// you would like it to contain.
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"username": username,
+		"username": u.Username,
 		"createdTime": time.Now().Unix(),
 	})
 	// Sign and get the complete encoded token as a string using the secret
@@ -175,7 +180,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	log.Print("Token created: ", tokenString)
 
 	//create a token instance using the token string
-	response := types.Token{Token: tokenString}
+	response := types.Token{Token: tokenString, Username: u.Username}
 	JsonResponse(response, w)
 }
 
