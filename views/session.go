@@ -19,10 +19,12 @@ const (
 )
 
 var SignKey []byte
+var UserIdMap map[string]int
 
 // Load RSA key into SignKey
 func init(){
 	var err error
+	UserIdMap = make(map[string]int)
 
 	SignKey, err = ioutil.ReadFile(privKeyPath)
 	if err != nil {
@@ -108,6 +110,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 
 // Write user data into session and cookie
 func initSession(w http.ResponseWriter, r *http.Request, u types.User) {
+	UserIdMap[u.Username] = u.Id
 	// Initialize session and user model
 	session, err := sessions.Store.Get(r, "LoginSession")
 	if err != nil {

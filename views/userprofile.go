@@ -8,6 +8,8 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/izayacity/LinkedIn/db"
 	"github.com/izayacity/LinkedIn/types"
+	"github.com/dgrijalva/jwt-go"
+	"fmt"
 )
 
 func printProfile(skills types.Skills) {
@@ -23,8 +25,28 @@ func printProfile(skills types.Skills) {
 	}
 }
 
-// TODO skills json response
+func GetUserName(r *http.Request) string {
+	tokenString := r.Header.Get("Authorization")
+	token, _:= jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return SignKey, nil
+	})
+	claims, _ := token.Claims.(jwt.MapClaims)
+	username := fmt.Sprint(claims["username"])
+	return username
+}
+
 func ShowMyProfile(w http.ResponseWriter, r *http.Request) {
+	username := GetUserName(r)
+	userId := strconv.Itoa(UserIdMap[username])
+	skills := db.GetSkills(userId)
+	printProfile(skills)
+
+	log.Print("ShowMyProfile: username: ", username, " and userId: ", userId)
+	w.WriteHeader(200)
+}
+
+// Abandoned
+func ShowMyProfileBySession(w http.ResponseWriter, r *http.Request) {
 	userId, username := sessions.GetCurrentUser(r)
 	if userId == -1 {
 		log.Print("Empty userId in ShowMyProfile")
@@ -55,8 +77,17 @@ func ShowUserProfile(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(200)
 }
 
-// TODO skill object response
 func AddSkill(w http.ResponseWriter, r *http.Request) {
+	username := GetUserName(r)
+	skillName := "Golang"
+	err := db.AddSkill(UserIdMap[username], skillName)
+	checkErr(err, w)
+	log.Print("Added skill(name) ", skillName, " to user ", username)
+	w.WriteHeader(201)
+}
+
+// Abandoned
+func AddSkillBySession(w http.ResponseWriter, r *http.Request) {
 	userId, _ := sessions.GetCurrentUser(r)
 	if userId == -1 {
 		log.Print("Empty userId in AddSkill")
@@ -71,12 +102,9 @@ func AddSkill(w http.ResponseWriter, r *http.Request) {
 }
 
 func RemoveSkill(w http.ResponseWriter, r *http.Request) {
-	userId, _ := sessions.GetCurrentUser(r)
-	if userId == -1 {
-		log.Print("Empty userId in RemoveSkill")
-		w.WriteHeader(401)
-		return
-	}
+	username := GetUserName(r)
+	userId := UserIdMap[username]
+
 	vars := mux.Vars(r)
 	skillId, skillErr := strconv.Atoi(vars["sid"])
 

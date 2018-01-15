@@ -9,6 +9,7 @@ package sessions
 import (
 "net/http"
 "github.com/gorilla/sessions"
+	"log"
 )
 
 // Store the cookie store which is going to store session data in the cookie
@@ -35,7 +36,9 @@ func IsLoggedIn(r *http.Request) bool {
 // Returns the username of the logged in user
 func GetCurrentUser(r *http.Request) (int, string) {
 	session, err := Store.Get(r, "LoginSession")
-	if err == nil {
+	if err == nil && session.Values["userid"] != nil && session.Values["username"] != nil {
+		log.Print(session.Values["userid"])
+		log.Print(session.Values["username"])
 		return session.Values["userid"].(int), session.Values["username"].(string)
 	}
 	return -1, ""

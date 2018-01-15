@@ -26,7 +26,7 @@ func main() {
 	r.HandleFunc("/v1/users/{uid}/skills/{sid}/endorse", views.RequiresLogin(views.Endorse)).Methods("PUT")
 
 	// deal with CORS issue by using Gorilla handlers
-	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type"})
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization", "Username"})
 	originsOk := handlers.AllowedOrigins([]string{"http://localhost:3000", "http://localhost:5000", "http://evil.com/"})
 	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "DELETE","OPTIONS"})
 	credentialsOk := handlers.AllowCredentials()
